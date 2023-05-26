@@ -1,66 +1,90 @@
 ### kütüphaneleri tanımlayınız. ### 
 import pandas as pd
+import re
+import snowballstemmer
 #from gensim.models import Word2Vec
 
+df = pd.read_csv("data/nlp.csv")
 
 ### tanımlanan fonksiyonlar da pass'lı ifadeler eksiktir. Bu fonksiyon içeriklerini doldurunuz ###
 
 # numerik karakterlerin kaldırılması
 def remove_numeric(value):
-    pass 
+    bfr = [item for item in value if not item.isdigit()]
+    bfr = "".join(bfr)
+    return bfr 
 
 # emojilerin kaldırılması
 def remove_emoji(value):
-    pass
+    bfr = re.compile("[\U00010000-\U0010ffff]", flags = re.UNICODE)
+    bfr = bfr.sub(r'',value)
+    return bfr
 
 #noktalama işaretlerinin kaldırılması
 def remove_noktalama(value):
-    pass 
+    return re.sub(r'[^\w\s]','',value) 
 
 #tek karakterli ifadelerin kaldırılması
 def remove_single_chracter(value):
-    pass
+    return re.sub(r'(?:^| )\w(?:$| )','',value)
 
 #linklerin kaldırılması 
 def remove_link(value):
-    pass
+    return re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',value)
 
 # hashtaglerin kaldırılması
 def remove_hashtag(value):
-    pass
+    return re.sub(r'#[^\s]+','',value)
 
 # kullanıcı adlarının kaldırılması
 def remove_username(value):
-    pass
+    return re.sub(r'@[^\s]+','',value)
 
 
 #kök indirgeme ve stop words işlemleri
 def stem_word(value):
-    pass
+    stemmer = snowballstemmer.stemmer('turkish')
+    value = value.lower()
+    value = stemmer.stemWords(value.split())
+    stop_words = ["acaba","ama","aslında","az","bazı","belki","biri","birkaç","birşey","biz","bu","çok",
+                 "çünkü","da","de","daha","defa","diye","eğer","en","gibi","hep","hem","hepsi","her",
+                 "hiç","için","ile","ise","kez","ki","kim","mi","mı","mu","mü","nasıl","ne","neden","nerde",
+                 "nerede","nereye","niçin","niye","o","sanki","şey","siz","şu","tüm","ve","veya","ya","yani"
+                 ,"bir","iki","üç","dört","beş","altı","yedi","sekiz","dokuz","on"]
+    value = [item for item in value if not item in stop_words]
+    value = "".join(value)
+    return value
 
 # ön işlem fonksiyonlarının sırayla çağırılması
 def pre_processing(value):
-    pass
+    return [remove_numeric(remove_emoji
+                          (remove_single_chracter
+                           (remove_noktalama
+                            (remove_link
+                             (remove_hashtag
+                              (remove_username
+                               (stem_word(word)))))))) for word in value.split()]
 
+df["Text"].apply(pre_processing)
 # Boşlukların kaldırılması
 def remove_space(value):
     pass
 
 # word2vec model oluşturma ve kaydetme
-#def word2vec_create(value):
- #   model = Word2Vec(sentences = value.tolist(),vector_size=100,window=5,min_count=1)
-  #  model.save("data/word2vec.model")
+def word2vec_create(value):
+    model = Word2Vec(sentences = value.tolist(),vector_size=100,window=5,min_count=1)
+    model.save("data/word2vec.model")
 
 # word2vec model yükleme ve vektör çıkarma
-#def word2vec_analysis(value):
- #   model = Word2Vec.load("data/word2vec.model")
-  #  pass
+def word2vec_analysis(value):
+    model = Word2Vec.load("data/word2vec.model")
+    pass
 
 # word2vec model güncellenir.
-#def word2vec_update(value):
- #   model = Word2Vec.load("data/word2vec.model")
-  #  model.build_vocab(value.tolist(),update=True)
-   # model.save("data/word2vec.model")
+def word2vec_update(value):
+    model = Word2Vec.load("data/word2vec.model")
+    model.build_vocab(value.tolist(),update=True)
+    model.save("data/word2vec.model")
 
 
 if __name__ == '__main__':

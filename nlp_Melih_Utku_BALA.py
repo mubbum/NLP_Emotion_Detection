@@ -11,7 +11,6 @@ df = pd.read_csv("data/nlp.csv")
 # numerik karakterlerin kaldırılması
 def remove_numeric(value):
     bfr = [item for item in value if not item.isdigit()]
-    print(bfr)
     bfr = "".join(bfr)
     return bfr 
 
@@ -58,7 +57,7 @@ def stem_word(value):
 
 # ön işlem fonksiyonlarının sırayla çağırılması
 def pre_processing(value):
-    return [remove_numeric(remove_numeric
+    return [remove_numeric(remove_emoji
                           (remove_single_chracter
                            (remove_noktalama
                             (remove_link
