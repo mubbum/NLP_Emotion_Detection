@@ -65,10 +65,9 @@ def pre_processing(value):
                               (remove_username
                                (stem_word(word)))))))) for word in value.split()]
 
-df["Text"].apply(pre_processing)
 # Boşlukların kaldırılması
 def remove_space(value):
-    return [item for item in value if itrm.strip()]
+    return [item for item in value if item.strip()]
 
 # word2vec model oluşturma ve kaydetme
 def word2vec_create(value):
