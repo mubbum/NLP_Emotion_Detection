@@ -2,7 +2,7 @@
 import pandas as pd
 import re
 import snowballstemmer
-#from gensim.models import Word2Vec
+from gensim.models import Word2Vec
 
 df = pd.read_csv("data/nlp.csv")
 
@@ -75,9 +75,19 @@ def word2vec_create(value):
     model.save("data/word2vec.model")
 
 # word2vec model yükleme ve vektör çıkarma
-def word2vec_analysis(value):
+def word2vec(value):
     model = Word2Vec.load("data/word2vec.model")
-    pass
+    bfr_list = []
+    bfr_len = len(value)
+
+    for k in value:
+        bfr = model.wv.key_to_index[k]
+        bfr = model.wv[bfr]
+        bfr_list.append(bfr)
+
+    bfr_list = sum(bfr_list)
+    bfr_list = bfr_list/bfr_len
+    return bfr_list.tolist()
 
 # word2vec model güncellenir.
 def word2vec_update(value):
