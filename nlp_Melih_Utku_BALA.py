@@ -3,8 +3,12 @@ import pandas as pd
 import re
 import snowballstemmer
 from gensim.models import Word2Vec
+from sklearn.model_selection import train_test_split
+from sklearn.svm import LinearSVC
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import f1_score,accuracy_score
 
-df = pd.read_csv("data/nlp.csv")
 
 ### tanımlanan fonksiyonlar da pass'lı ifadeler eksiktir. Bu fonksiyon içeriklerini doldurunuz ###
 
@@ -103,13 +107,22 @@ if __name__ == '__main__':
 
 
     ### tanımlanan df_1 içerisinde Text sütununu ön işlem fonksiyonlarından geçirerek Text_2 olarak df_1 içerisinde yeni bir sütun oluşturun. ###
-    
+    df_1["Text_2"] = df_1["Text"].apply(pre_processing)
+    df_1["Text_2"] = df_1["Text_2"].apply(remove_space)
 
     ### df_1 içerisinde Text_2 sütununda boş liste kontrolü ###
+    df_1[df_1["Text_2"].str[0].isnull()]
 
+    df_index = df_1[df_1["Text_2"].str[0].isnull()].index
+    df_1 = df_1.drop(df_index)
+    df_1 = df_1.reset_index()
+    del df_1["index"]
+
+    df_1[df_1["Text_2"].str[0].isnull()]
     
     ### word2vec model oluşturma ###
-    
+    word2vec_create(df_1["Text_2"])
+    df_1["word2vec"] = df_1["Text_2"].apply(word2vec)
     
     # df_1 dataframe mizi artık kullanmaycağımızdan ram de yer kaplamaması adına boş bir değer ataması yapıyoruz.
     df_1 = {}
@@ -120,21 +133,35 @@ if __name__ == '__main__':
     df_2 = pd.read_csv("data/metin_siniflandirma.csv",index_col=0)
 
     ### tanımlanan df_2 içerisinde Text sütununu ön işlem fonksiyonlarından geçirerek Text_2 olarak df_2 içerisinde yeni bir sütun oluşturun. ###
-
+    df_2["Text_2"] = df_2["Text"].apply(pre_processing)
+    df_2["Text_2"] = df_2["Text_2"].apply(remove_space)
     
     ### df_2 içerisinde Text_2 sütununda boş liste kontrolü ###
+    df_2[df_2["Text_2"].str[0].isnull()]
 
+    df_index = df_2[df_2["Text_2"].str[0].isnull()].index
+    df_2 = df_2.drop(df_index)
+    df_2 = df_2.reset_index()
+    del df_2["index"]
+
+    df_2[df_2["Text_2"].str[0].isnull()]
 
     ### sınıflandırma yapacağımız df_2 içerisinde bulunan Text_2 sütun verisini word2vec verisinde güncelleyin. ### 
-
+    word2vec_update(df_2["Text_2"])
 
     ### Text_2 sütun üzerinden word2vec adında bu modeli kullanarak yeni bir sütun yaratın
-
+    df_2["word2vec"] = df_2["Text_2"].apply(word2vec)
 
     ### word2vec sütunumuzu train test olarak bölün ###
-
+    msg_train,msg_test,label_train,label_test = train_test_split(df_2["word2vec"].tolist(),df_2["Label"].tolist(),test_size=0.2,random_state=42)
 
     ### svm pipeline oluştur, modeği eğit ve test et ###
-
+    svm = Pipeline([("svm",LinearSVC())])
+    svm.fit(msg_train,label_train)
+    y_pred_class = svm.predict(msg_test)
     
     ### accuracy ve f1 score çıktısını print ile gösterin. ###
+    print("svm accuary score :", accuracy_score(label_test,y_pred_class))
+    print("svm f1 score :", f1_score(label_test,y_pred_class,average="weighted"))
+
+    
