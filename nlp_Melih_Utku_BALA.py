@@ -1,4 +1,4 @@
-### kütüphaneleri tanımlayınız. ### 
+### import of libraries ### 
 import pandas as pd
 import re
 import snowballstemmer
@@ -10,42 +10,41 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import f1_score,accuracy_score
 
 
-### tanımlanan fonksiyonlar da pass'lı ifadeler eksiktir. Bu fonksiyon içeriklerini doldurunuz ###
 
-# numerik karakterlerin kaldırılması
+# Removal of numeric characters
 def remove_numeric(value):
     bfr = [item for item in value if not item.isdigit()]
     bfr = "".join(bfr)
     return bfr 
 
-# emojilerin kaldırılması
+# Removal of emojis
 def remove_emoji(value):
     bfr = re.compile("[\U00010000-\U0010ffff]", flags = re.UNICODE)
     bfr = bfr.sub(r'',value)
     return bfr
 
-#noktalama işaretlerinin kaldırılması
+# Removal of punctuation
 def remove_noktalama(value):
     return re.sub(r'[^\w\s]','',value) 
 
-#tek karakterli ifadelerin kaldırılması
+# Removal of single-character expressions
 def remove_single_chracter(value):
     return re.sub(r'(?:^| )\w(?:$| )','',value)
 
-#linklerin kaldırılması 
+# Removal of links
 def remove_link(value):
     return re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',value)
 
-# hashtaglerin kaldırılması
+# Removal of hashtags
 def remove_hashtag(value):
     return re.sub(r'#[^\s]+','',value)
 
-# kullanıcı adlarının kaldırılması
+# Removal of usernames
 def remove_username(value):
     return re.sub(r'@[^\s]+','',value)
 
 
-#kök indirgeme ve stop words işlemleri
+# Stem reduction and stop words operations
 def stem_word(value):
     stemmer = snowballstemmer.stemmer('turkish')
     value = value.lower()
@@ -59,7 +58,7 @@ def stem_word(value):
     value = "".join(value)
     return value
 
-# ön işlem fonksiyonlarının sırayla çağırılması
+# Calling preprocessing functions sequentially
 def pre_processing(value):
     return [remove_numeric(remove_emoji
                           (remove_single_chracter
@@ -69,16 +68,16 @@ def pre_processing(value):
                               (remove_username
                                (stem_word(word)))))))) for word in value.split()]
 
-# Boşlukların kaldırılması
+# Removal of spaces
 def remove_space(value):
     return [item for item in value if item.strip()]
 
-# word2vec model oluşturma ve kaydetme
+# Creating and saving a word2vec model
 def word2vec_create(value):
     model = Word2Vec(sentences = value.tolist(),vector_size=100,window=5,min_count=1)
     model.save("data/word2vec.model")
 
-# word2vec model yükleme ve vektör çıkarma
+# word2vec model loading and vector extraction
 def word2vec(value):
     model = Word2Vec.load("data/word2vec.model")
     bfr_list = []
@@ -93,7 +92,7 @@ def word2vec(value):
     bfr_list = bfr_list/bfr_len
     return bfr_list.tolist()
 
-# word2vec model güncellenir.
+# word2vec model is updated
 def word2vec_update(value):
     model = Word2Vec.load("data/word2vec.model")
     model.build_vocab(value.tolist(),update=True)
@@ -102,15 +101,15 @@ def word2vec_update(value):
 
 if __name__ == '__main__':
    
-    # veri temizlemesi için örnek veri kümemiz okunur.
+    # Our sample dataset is read for data cleaning
     df_1 = pd.read_csv("data/nlp.csv",index_col=0)
 
 
-    ### tanımlanan df_1 içerisinde Text sütununu ön işlem fonksiyonlarından geçirerek Text_2 olarak df_1 içerisinde yeni bir sütun oluşturun. ###
+    ### Create a new column in df_1 as Text_2 by passing the Text column in the defined df_1 through the preprocessing functions. ###
     df_1["Text_2"] = df_1["Text"].apply(pre_processing)
     df_1["Text_2"] = df_1["Text_2"].apply(remove_space)
 
-    ### df_1 içerisinde Text_2 sütununda boş liste kontrolü ###
+    ### Empty list control in Text_2 column in df_1 ###
     df_1[df_1["Text_2"].str[0].isnull()]
 
     df_index = df_1[df_1["Text_2"].str[0].isnull()].index
@@ -120,23 +119,23 @@ if __name__ == '__main__':
 
     df_1[df_1["Text_2"].str[0].isnull()]
     
-    ### word2vec model oluşturma ###
+    ### word2vec model creation ###
     word2vec_create(df_1["Text_2"])
     df_1["word2vec"] = df_1["Text_2"].apply(word2vec)
     
-    # df_1 dataframe mizi artık kullanmaycağımızdan ram de yer kaplamaması adına boş bir değer ataması yapıyoruz.
+    # Since we will not be using our df_1 dataframe anymore, we assign an empty value so that it does not take up space in RAM.
     df_1 = {}
 
     #############################################################################################################################################
 
-    # sınıflandırma yapacağımız veri okunur.
+    # The data we will classify is read
     df_2 = pd.read_csv("data/metin_siniflandirma.csv",index_col=0)
 
-    ### tanımlanan df_2 içerisinde Text sütununu ön işlem fonksiyonlarından geçirerek Text_2 olarak df_2 içerisinde yeni bir sütun oluşturun. ###
+    ### Create a new column in df_2 as Text_2 by passing the Text column in the defined df_2 through the preprocessing functions. ###
     df_2["Text_2"] = df_2["Text"].apply(pre_processing)
     df_2["Text_2"] = df_2["Text_2"].apply(remove_space)
     
-    ### df_2 içerisinde Text_2 sütununda boş liste kontrolü ###
+    ### Empty list control in Text_2 column in df_2 ###
     df_2[df_2["Text_2"].str[0].isnull()]
 
     df_index = df_2[df_2["Text_2"].str[0].isnull()].index
@@ -146,21 +145,21 @@ if __name__ == '__main__':
 
     df_2[df_2["Text_2"].str[0].isnull()]
 
-    ### sınıflandırma yapacağımız df_2 içerisinde bulunan Text_2 sütun verisini word2vec verisinde güncelleyin. ### 
+    ### Update the Text_2 column data in the df_2 that we will classify in the word2vec data. ### 
     word2vec_update(df_2["Text_2"])
 
-    ### Text_2 sütun üzerinden word2vec adında bu modeli kullanarak yeni bir sütun yaratın
+    ### Create a new column using this model called word2vec over text_2 columns
     df_2["word2vec"] = df_2["Text_2"].apply(word2vec)
 
-    ### word2vec sütunumuzu train test olarak bölün ###
+    ### Split word2vec column as train test ###
     msg_train,msg_test,label_train,label_test = train_test_split(df_2["word2vec"].tolist(),df_2["Label"].tolist(),test_size=0.2,random_state=42)
 
-    ### svm pipeline oluştur, modeği eğit ve test et ###
+    ### Create svm pipeline, train and test the model ###
     svm = Pipeline([("svm",LinearSVC())])
     svm.fit(msg_train,label_train)
     y_pred_class = svm.predict(msg_test)
     
-    ### accuracy ve f1 score çıktısını print ile gösterin. ###
+    ### Show accuracy and f1 score output with print ###
     print("svm accuary score :", accuracy_score(label_test,y_pred_class))
     print("svm f1 score :", f1_score(label_test,y_pred_class,average="weighted"))
 
